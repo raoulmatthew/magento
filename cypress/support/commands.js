@@ -1,25 +1,35 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import {categoryElements} from '../fixtures/pages';
+
+Cypress.Commands.add('verifyCategoryLink', (linkSelector, expectedText) => {
+    cy.get(linkSelector).should('have.text', expectedText).and('be.visible');
+    cy.get(linkSelector).click();
+    cy.get(categoryElements.baseElement).should('have.text', expectedText).should('be.visible');
+});
+
+Cypress.Commands.add('verifyChartPrice', () => {
+    cy.get('[data-th="Price"]')
+        .invoke('text')
+        .then((text) => {
+            const priceValue = parseFloat(text.replace(/[^\d.]/g, ''));
+            cy.get('[data-th="Qty"]')
+                .find('[data-cart-item-id="MH07-L-Green"]')
+                .invoke('attr', 'value')
+                .then((text) => {
+                    const quantityValue = parseFloat(text);
+                    cy.get('.cart')
+                        .find('[data-th="Subtotal"]')
+                        .invoke('text')
+                        .then((text) => {
+                            const subtotalValue = parseFloat(text.replace(/[^\d.]/g, ''));
+                            expect(priceValue * quantityValue).to.equal(subtotalValue);
+                        });
+                    cy.get('.cart-totals')
+                        .find('[data-th="Subtotal"]')
+                        .invoke('text')
+                        .then((text) => {
+                            const summarySubtotalValue = parseFloat(text.replace(/[^\d.]/g, ''));
+                            expect(priceValue * quantityValue).to.equal(summarySubtotalValue);
+                        });
+                });
+        });
+});
